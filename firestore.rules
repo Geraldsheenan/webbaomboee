@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /contacts/{contactId} {
+      // Izinkan siapa saja untuk membuat dokumen di koleksi 'contacts'
+      // dengan syarat data yang dikirim sesuai dengan aturan.
+      allow create: if
+          // 1. Memastikan semua field yang dibutuhkan ada.
+          request.resource.data.keys().hasAll(['name', 'email', 'message', 'createdAt']) &&
+          // 2. Memvalidasi tipe data dari setiap field.
+          request.resource.data.name is string &&
+          request.resource.data.email is string &&
+          request.resource.data.message is string &&
+          // 3. Memastikan field tidak kosong.
+          request.resource.data.name.size() > 0 &&
+          request.resource.data.message.size() > 0 &&
+          // 4. Memastikan 'createdAt' adalah timestamp dari server.
+          request.resource.data.createdAt == request.time;
+
+      // Jangan izinkan siapapun untuk membaca, mengubah, atau menghapus data.
+      allow read, update, delete: if false;
+    }
+  }
+}
